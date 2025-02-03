@@ -45,7 +45,7 @@ vim.opt.splitbelow = true
 
 -- Sets how neovim will display certain whitespace characters in the editor.
 vim.opt.list = true
-vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+vim.opt.listchars = { tab = '└─', trail = '·', nbsp = '␣' }
 
 -- Preview substitutions live, as you type!
 vim.opt.inccommand = 'split'
@@ -59,11 +59,11 @@ vim.opt.scrolloff = 10
 -- Disable text wrapping.
 vim.opt.wrap = false
 
+-- Make tab in command-line mode behave like in bash.
+vim.opt.wildmode = { 'longest', 'list' }
+
 -- [[ Keymaps ]]
 --  See `:help vim.keymap.set()`
-
--- Clear highlights on search when pressing <Esc> in normal mode
-vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
 vim.keymap.set(
@@ -84,6 +84,10 @@ vim.keymap.set('ca', 'rg', 'gr')
 
 -- Alternate between two buffers.
 vim.keymap.set('n', '<leader><leader>', '<c-^>')
+
+-- Enable readline commands in command mode
+vim.keymap.set('c', '<c-a>', '<home>')
+vim.keymap.set('c', '<c-e>', '<end>')
 
 -- [[ Autocommands ]]
 --  See `:help lua-guide-autocommands`
