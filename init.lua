@@ -355,10 +355,12 @@ require('lazy').setup({
       -- Ensure the servers and tools above are installed
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
-        -- tools used by conform
-        'stylua',
-        'prettier',
+        -- List of available tools at https://mason-registry.dev/registry/list
+        -- Tools used by conform.
         'eslint_d',
+        'jsonlint',
+        'prettier',
+        'stylua',
       })
       require('mason-tool-installer').setup({ ensure_installed = ensure_installed })
 
@@ -462,7 +464,7 @@ require('lazy').setup({
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
 
-      require('mini.operators').setup()
+      require('mini.operators').setup({ exchange = { prefix = 'cx' } })
 
       local statusline = require('mini.statusline')
       statusline.setup({ use_icons = false })
