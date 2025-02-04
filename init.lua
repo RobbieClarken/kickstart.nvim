@@ -347,6 +347,8 @@ require('lazy').setup({
 
         ['eslint-lsp'] = {},
 
+        jsonls = {},
+
         lua_ls = {},
       }
 
