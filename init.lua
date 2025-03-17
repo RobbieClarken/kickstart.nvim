@@ -113,6 +113,12 @@ vim.keymap.set(
   ":let @/='\\C\\<' . expand('<cword>') . '\\>'<cr>:let v:searchforward=0<cr>n"
 )
 
+vim.keymap.set(
+  'n',
+  '<c-l>',
+  '<cmd>nohlsearch<cr><cmd>diffupdate<cr><cmd>set nospell<cr><cmd>fclose<cr><cmd>mode<cr>'
+)
+
 local rbc = require('rbc')
 vim.keymap.set('n', '<leader>p', rbc.copy_path)
 vim.keymap.set('n', '<leader>t', rbc.build_test_command)
@@ -546,7 +552,6 @@ require('lazy').setup({
     config = function()
       -- Better Around/Inside textobjects
       --
-      -- Examples:
       --  - va)  - [V]isually select [A]round [)]paren
       --  - yinq - [Y]ank [I]nside [N]ext [Q]uote
       --  - ci'  - [C]hange [I]nside [']quote
@@ -559,6 +564,7 @@ require('lazy').setup({
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
 
+      --- - grw - [G]o [R]eplace [W]ord
       require('mini.operators').setup()
 
       local statusline = require('mini.statusline')
