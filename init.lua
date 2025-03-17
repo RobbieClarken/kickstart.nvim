@@ -17,7 +17,6 @@ vim.opt.showmode = false
 
 -- Sync clipboard between OS and Neovim.
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
---  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
 vim.schedule(function()
   vim.opt.clipboard = 'unnamedplus'
@@ -43,6 +42,10 @@ vim.opt.updatetime = 250
 vim.opt.splitright = true
 vim.opt.splitbelow = true
 
+vim.opt.expandtab = true -- expand tabs into spaces
+vim.opt.shiftwidth = 2 -- replace tabs with 2 spaces
+vim.opt.tabstop = 2 -- display tabs with a width of two characters
+
 -- Sets how neovim will display certain whitespace characters in the editor.
 vim.opt.list = true
 vim.opt.listchars = { tab = '└─', trail = '·', nbsp = '␣' }
@@ -61,6 +64,8 @@ vim.opt.wrap = false
 
 -- Make tab in command-line mode behave like in bash.
 vim.opt.wildmode = { 'longest', 'list' }
+
+vim.cmd('packadd cfilter')
 
 -- [[ Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -88,6 +93,51 @@ vim.keymap.set('n', '<leader><leader>', '<c-^>')
 -- Enable readline commands in command mode
 vim.keymap.set('c', '<c-a>', '<home>')
 vim.keymap.set('c', '<c-e>', '<end>')
+
+-- Enable navigating through quickfix lists using shift + arrow keys.
+vim.keymap.set('n', '<s-left>', '<cmd>cpfile<cr>zz')
+vim.keymap.set('n', '<s-right>', '<cmd>cnfile<cr>zz')
+vim.keymap.set('n', '<s-up>', '<cmd>cprevious<cr>zz')
+vim.keymap.set('n', '<s-down>', '<cmd>cnext<cr>zz')
+
+-- Make * and # respect smartcase
+-- https://vi.stackexchange.com/a/4055
+vim.keymap.set(
+  'n',
+  '*',
+  ":let @/='\\C\\<' . expand('<cword>') . '\\>'<cr>:let v:searchforward=1<cr>n"
+)
+vim.keymap.set(
+  'n',
+  '#',
+  ":let @/='\\C\\<' . expand('<cword>') . '\\>'<cr>:let v:searchforward=0<cr>n"
+)
+
+local rbc = require('rbc')
+vim.keymap.set('n', '<leader>p', rbc.copy_path)
+vim.keymap.set('n', '<leader>t', rbc.build_test_command)
+vim.keymap.set('n', 'yoa', rbc.copilot_toggle)
+
+-- [[ User commands ]]
+-- See `:help lua-guide-commands-create`
+
+vim.api.nvim_create_user_command('FormatDisable', function(args)
+  if args.bang then
+    -- FormatDisable! will disable formatting just for this buffer
+    vim.b.disable_autoformat = true
+  else
+    vim.g.disable_autoformat = true
+  end
+end, {
+  desc = 'Disable autoformat-on-save',
+  bang = true,
+})
+vim.api.nvim_create_user_command('FormatEnable', function()
+  vim.b.disable_autoformat = false
+  vim.g.disable_autoformat = false
+end, {
+  desc = 'Re-enable autoformat-on-save',
+})
 
 -- [[ Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -122,13 +172,12 @@ vim.opt.rtp:prepend(lazypath)
 
 -- [[ Configure and install plugins ]]
 require('lazy').setup({
-  'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
-
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VimEnter',
     dependencies = {
       'nvim-lua/plenary.nvim',
+      'nvim-telescope/telescope-live-grep-args.nvim',
       {
         'nvim-telescope/telescope-fzf-native.nvim',
 
@@ -150,6 +199,8 @@ require('lazy').setup({
       -- This opens a window that shows you all of the keymaps for the current
       -- Telescope picker.
 
+      local lga_actions = require('telescope-live-grep-args.actions')
+
       -- [[ Configure Telescope ]]
       -- See `:help telescope` and `:help telescope.setup()`
       require('telescope').setup({
@@ -157,25 +208,46 @@ require('lazy').setup({
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
           },
+          live_grep_args = {
+            mappings = {
+              i = {
+                ['<C-k>'] = lga_actions.quote_prompt(),
+                ['<C-i>'] = lga_actions.quote_prompt({ postfix = ' --iglob ' }),
+              },
+            },
+          },
         },
       })
 
       -- Enable Telescope extensions if they are installed
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
+      pcall(require('telescope').load_extension, 'live_grep_args')
 
       -- See `:help telescope.builtin`
       local builtin = require('telescope.builtin')
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-      vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
+      vim.keymap.set('n', '<leader>sf', function()
+        builtin.find_files({ hidden = true })
+      end, { desc = '[S]earch [F]iles' })
+      vim.keymap.set('n', '<leader>sF', function()
+        builtin.find_files({ no_ignore = true, hidden = true })
+      end, { desc = '[S]earch [F]iles (include ignored)' })
       vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
-      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
+      vim.keymap.set('n', '<leader>sg', function()
+        require('telescope').extensions.live_grep_args.live_grep_args({
+          additional_args = { '--hidden' },
+        })
+      end, { desc = '[S]earch by [G]rep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files' })
       vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = '[ ] Find buffers' })
+      vim.keymap.set('n', '<leader>sv', function()
+        require('telescope').extensions.live_grep_args.live_grep_args({ cwd = '~/Documents/notes' })
+      end, { desc = '[S]earch [V]imWiki' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -230,6 +302,8 @@ require('lazy').setup({
       { 'j-hui/fidget.nvim', opts = {} },
     },
     config = function()
+      require('lspconfig').sourcekit.setup({})
+
       --  This function gets run when an LSP attaches to a particular buffer.
       --    That is to say, every time a new file is opened that is associated with
       --    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
@@ -287,6 +361,21 @@ require('lazy').setup({
           --  For example, in C this would take you to the header.
           map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
+          map('<leader>ci', function()
+            local code_action_found = false
+            vim.lsp.buf.code_action({
+              apply = true,
+              filter = function(a)
+                if not code_action_found and a.title == 'Inline variable' then
+                  code_action_found = true
+                  return true
+                else
+                  return false
+                end
+              end,
+            })
+          end, '[C]ode Action', { 'n', 'x' })
+
           -- The following two autocommands are used to highlight references of the
           -- word under your cursor when your cursor rests there for a little while.
           --    See `:help CursorHold` for information about when this is executed
@@ -319,16 +408,6 @@ require('lazy').setup({
               end,
             })
           end
-
-          -- The following code creates a keymap to toggle inlay hints in your
-          -- code, if the language server you are using supports them
-          --
-          -- This may be unwanted, since they displace some of your code
-          if client and client.supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
-            map('<leader>th', function()
-              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = event.buf }))
-            end, '[T]oggle Inlay [H]ints')
-          end
         end,
       })
 
@@ -356,11 +435,15 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         -- List of available tools at https://mason-registry.dev/registry/list
-        -- Tools used by conform.
+        -- Tools used by stevearc/conform.nvim
+        'black',
         'eslint_d',
         'jsonlint',
         'prettier',
         'stylua',
+        'sqlfluff',
+        -- Needed for pmizio/typescript-tools.nvim
+        'typescript-language-server',
       })
       require('mason-tool-installer').setup({ ensure_installed = ensure_installed })
 
@@ -369,6 +452,9 @@ require('lazy').setup({
         ensure_installed = {},
         handlers = {
           function(server_name)
+            if server_name == 'ts_ls' then
+              return
+            end
             local server = servers[server_name] or {}
             -- This handles overriding only values explicitly passed
             -- by the server configuration above. Useful when disabling
@@ -399,27 +485,36 @@ require('lazy').setup({
     opts = {
       notify_on_error = false,
       format_on_save = function(bufnr)
+        if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
+          return
+        end
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
+        local disable_filetypes = { c = true, cpp = true, json = true, jsonc = true }
         local lsp_format_opt
         if disable_filetypes[vim.bo[bufnr].filetype] then
           lsp_format_opt = 'never'
         else
           lsp_format_opt = 'fallback'
         end
-        return {
-          timeout_ms = 500,
-          lsp_format = lsp_format_opt,
-        }
+        local timeout_ms
+        if vim.bo[bufnr].filetype == 'sql' then
+          timeout_ms = 2000
+        else
+          timeout_ms = 500
+        end
+        return { timeout_ms = timeout_ms, lsp_format = lsp_format_opt }
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
         -- We use prettier instead of prettierd because prettierd can use an unwanted version of
         -- prettier that is installed in node_modules.
         javascript = { 'eslint_d', 'prettier' },
+        python = { 'black' },
+        sql = { 'sqlfluff' },
         typescript = { 'eslint_d', 'prettier' },
+        typescriptreact = { 'eslint_d', 'prettier' },
       },
       formatters = {
         -- Use the mason version of prettier to avoid using an unwanted version from node_modules.
@@ -464,7 +559,7 @@ require('lazy').setup({
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
 
-      require('mini.operators').setup({ exchange = { prefix = 'cx' } })
+      require('mini.operators').setup()
 
       local statusline = require('mini.statusline')
       statusline.setup({ use_icons = false })
@@ -509,4 +604,5 @@ require('lazy').setup({
 
   { import = 'custom.plugins' },
 })
--- vim: ts=2 sts=2 sw=2 et
+
+require('bracket-paste')
