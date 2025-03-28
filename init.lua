@@ -16,11 +16,8 @@ vim.opt.mouse = 'a'
 vim.opt.showmode = false
 
 -- Sync clipboard between OS and Neovim.
---  Schedule the setting after `UiEnter` because it can increase startup-time.
---  See `:help 'clipboard'`
-vim.schedule(function()
-  vim.opt.clipboard = 'unnamedplus'
-end)
+-- See `:help 'clipboard'`
+vim.opt.clipboard = 'unnamedplus'
 
 -- Enable break indent
 vim.opt.breakindent = true
@@ -147,6 +144,14 @@ end, {
 
 -- [[ Autocommands ]]
 --  See `:help lua-guide-autocommands`
+
+vim.api.nvim_create_autocmd('CompleteDone', {
+  desc = 'Automatically close the omnifunc preview window',
+  group = vim.api.nvim_create_augroup('autoclose-omnifunc-preview', { clear = true }),
+  callback = function()
+    vim.cmd('pclose')
+  end,
+})
 
 -- Highlight when yanking text
 vim.api.nvim_create_autocmd('TextYankPost', {
@@ -308,6 +313,9 @@ require('lazy').setup({
       { 'j-hui/fidget.nvim', opts = {} },
     },
     config = function()
+      -- For xcode projects, [xcode-build-server](https://github.com/SolaWing/xcode-build-server)
+      -- should be used to generate a `buildServer.json` file in the root of the project
+      -- to ensure sourcekit-lsp is aware of implicit imports.
       require('lspconfig').sourcekit.setup({})
 
       --  This function gets run when an LSP attaches to a particular buffer.
@@ -431,6 +439,8 @@ require('lazy').setup({
         -- See `:help lspconfig-all` for a list of all the pre-configured LSPs
 
         ['eslint-lsp'] = {},
+
+        jdtls = {},
 
         jsonls = {},
 
