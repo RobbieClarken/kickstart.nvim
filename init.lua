@@ -6,7 +6,8 @@ vim.g.maplocalleader = ' '
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 
--- Make line numbers default
+-- Show relative line numbers
+vim.opt.relativenumber = true
 vim.opt.number = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
@@ -61,6 +62,9 @@ vim.opt.wrap = false
 
 -- Make tab in command-line mode behave like in bash.
 vim.opt.wildmode = { 'longest', 'list' }
+
+-- Enable diagnostics in virtual text
+vim.diagnostic.config({ virtual_text = true })
 
 vim.cmd('packadd cfilter')
 
@@ -300,6 +304,9 @@ require('lazy').setup({
   },
   {
     -- Main LSP Configuration
+    -- Mappings provided by lspconfig:
+    -- - [d and ]d : navigate to diagnostics
+    -- - <C-W>d : show diagnostic under cursor in floating window
     'neovim/nvim-lspconfig',
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
@@ -336,11 +343,11 @@ require('lazy').setup({
           map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
 
           -- Find references for the word under your cursor.
-          map('gR', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+          map('grr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
 
           -- Jump to the implementation of the word under your cursor.
           --  Useful when your language has ways of declaring types without an actual implementation.
-          map('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
+          map('gri', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
 
           -- Jump to the type of the word under your cursor.
           --  Useful when you're not sure what type a variable is and you want to see
@@ -363,14 +370,6 @@ require('lazy').setup({
             '[W]orkspace [S]ymbols'
           )
 
-          -- Rename the variable under your cursor.
-          --  Most Language Servers support renaming across files, etc.
-          map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
-
-          -- Execute a code action, usually your cursor needs to be on top of an error
-          -- or a suggestion from your LSP for this to activate.
-          map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction', { 'n', 'x' })
-
           -- WARN: This is not Goto Definition, this is Goto Declaration.
           --  For example, in C this would take you to the header.
           map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
@@ -388,7 +387,7 @@ require('lazy').setup({
                 end
               end,
             })
-          end, '[C]ode Action', { 'n', 'x' })
+          end, '[C]ode [I]nline Variable', { 'n', 'x' })
 
           -- The following two autocommands are used to highlight references of the
           -- word under your cursor when your cursor rests there for a little while.
@@ -398,7 +397,7 @@ require('lazy').setup({
           local client = vim.lsp.get_client_by_id(event.data.client_id)
           if
             client
-            and client.supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight)
+            and client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight)
           then
             local highlight_augroup =
               vim.api.nvim_create_augroup('lsp-highlight', { clear = false })
@@ -445,6 +444,8 @@ require('lazy').setup({
         jsonls = {},
 
         lua_ls = {},
+
+        pyright = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -574,8 +575,9 @@ require('lazy').setup({
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
 
-      --- - grw - [G]o [R]eplace [W]ord
-      require('mini.operators').setup()
+      --- - <space>rw - [R]eplace [W]ord
+      --- - gxw - [G]o [E]xchange [W]ord
+      require('mini.operators').setup({ replace = { prefix = '<leader>r' } })
 
       local statusline = require('mini.statusline')
       statusline.setup({ use_icons = false })
