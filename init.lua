@@ -68,6 +68,8 @@ vim.diagnostic.config({ virtual_text = true })
 
 vim.cmd('packadd cfilter')
 
+vim.env.PATH = vim.fn.expand('~/.local/nvim-venv3/bin') .. ':' .. vim.env.PATH
+
 -- [[ Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -305,8 +307,11 @@ require('lazy').setup({
   {
     -- Main LSP Configuration
     -- Mappings provided by lspconfig:
+    -- https://neovim.io/doc/user/lsp.html#lsp-defaults
+    -- https://neovim.io/doc/user/diagnostic.html#diagnostic-defaults
     -- - [d and ]d : navigate to diagnostics
     -- - <C-W>d : show diagnostic under cursor in floating window
+    -- - gra : code actions
     'neovim/nvim-lspconfig',
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
@@ -454,9 +459,11 @@ require('lazy').setup({
         -- List of available tools at https://mason-registry.dev/registry/list
         -- Tools used by stevearc/conform.nvim
         'black',
+        'css-lsp',
         'eslint_d',
         'jsonlint',
         'prettier',
+        'shellcheck',
         'stylua',
         'sqlfluff',
         -- Needed for pmizio/typescript-tools.nvim
@@ -529,6 +536,7 @@ require('lazy').setup({
         -- prettier that is installed in node_modules.
         javascript = { 'eslint_d', 'prettier' },
         python = { 'black' },
+        -- swift = { 'swiftlint' },
         sql = { 'sqlfluff' },
         typescript = { 'eslint_d', 'prettier' },
         typescriptreact = { 'eslint_d', 'prettier' },
@@ -540,21 +548,13 @@ require('lazy').setup({
     },
   },
 
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
-    init = function()
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme('tokyonight-night')
-
-      -- You can configure highlights by doing something like:
-      vim.cmd.hi('Comment gui=none')
+  {
+    'navarasu/onedark.nvim',
+    priority = 1000,
+    config = function()
+      -- require('onedark').setup({ style = 'light' })
+      require('onedark').setup({})
+      require('onedark').load()
     end,
   },
 

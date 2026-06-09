@@ -6,8 +6,11 @@ return {
     event = { 'BufReadPre', 'BufNewFile' },
     config = function()
       local lint = require('lint')
+      -- https://github.com/mfussenegger/nvim-lint?tab=readme-ov-file#available-linters
       lint.linters_by_ft = {
+        sh = { 'shellcheck' },
         sql = { 'sqlfluff' },
+        swift = { 'swiftlint' },
       }
       -- Create autocommand which carries out the actual linting
       -- on the specified events.
