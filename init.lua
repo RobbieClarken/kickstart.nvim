@@ -77,6 +77,8 @@ do
   -- See `:help 'confirm'`
   vim.o.confirm = true
 
+  vim.env.PATH = vim.fn.expand('~/.local/nvim-venv3/bin') .. ':' .. vim.env.PATH
+
   -- [[ Basic Keymaps ]]
   --  See `:help vim.keymap.set()`
 
@@ -645,7 +647,8 @@ do
   local servers = {
     -- clangd = {},
     -- gopls = {},
-    -- pyright = {},
+    jsonls = {},
+    pyright = {},
     -- rust_analyzer = {},
     --
     -- Some languages (like typescript) have entire language plugins that can be useful:
