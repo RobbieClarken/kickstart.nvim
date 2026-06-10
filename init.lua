@@ -698,6 +698,8 @@ do
     gh 'WhoIsSethDaniel/mason-tool-installer.nvim',
   }
 
+  vim.lsp.enable('sourcekit')
+
   -- Automatically install LSPs and related tools to stdpath for Neovim
   require('mason').setup {}
 
