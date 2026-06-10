@@ -55,6 +55,10 @@ do
   vim.o.splitright = true
   vim.o.splitbelow = true
 
+  vim.opt.expandtab = true -- expand tabs into spaces
+  vim.opt.shiftwidth = 2 -- replace tabs with 2 spaces
+  vim.opt.tabstop = 2 -- display tabs with a width of two characters
+
   -- Sets how neovim will display certain whitespace characters in the editor.
   vim.o.list = true
   vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
@@ -303,9 +307,6 @@ do
   if vim.g.have_nerd_font then
     vim.pack.add({ gh('nvim-tree/nvim-web-devicons') })
   end
-
-  vim.pack.add({ gh('NMAC427/guess-indent.nvim') })
-  require('guess-indent').setup({})
 
   -- Here is a more advanced configuration example that passes options to `gitsigns.nvim`
   --
@@ -848,6 +849,7 @@ do
     'bash',
     'c',
     'diff',
+    'gitcommit',
     'html',
     'lua',
     'luadoc',
