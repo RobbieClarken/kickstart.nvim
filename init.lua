@@ -80,10 +80,6 @@ do
   -- [[ Basic Keymaps ]]
   --  See `:help vim.keymap.set()`
 
-  -- Clear highlights on search when pressing <Esc> in normal mode
-  --  See `:help hlsearch`
-  vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
-
   -- Diagnostic Config & Keymaps
   --  See `:help vim.diagnostic.Opts`
   vim.diagnostic.config {
@@ -118,20 +114,73 @@ do
   -- Exit terminal mode in the builtin terminal with a <Esc><Esc>.
   vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
-  -- -- Keybinds to make split navigation easier.
-  -- --  Use CTRL+<hjkl> to switch between windows
-  -- --
-  -- --  See `:help wincmd` for a list of all window commands
-  -- vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
-  -- vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-  -- vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-  -- vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+  -- Configure :gr to use ripgrep if it is available.
+  if vim.fn.executable('rg') then
+    vim.opt.grepprg = 'rg --vimgrep --smart-case'
+    vim.opt.grepformat = '%f:%l:%c:%m'
+  end
 
-  -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
-  -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
-  -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
-  -- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
-  -- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
+  -- Configure :rg to be an alias of :gr.
+  vim.keymap.set('ca', 'rg', 'gr')
+
+  -- Alternate between two buffers.
+  vim.keymap.set('n', '<leader><leader>', '<c-^>')
+
+  -- Enable readline commands in command mode
+  vim.keymap.set('c', '<c-a>', '<home>')
+  vim.keymap.set('c', '<c-e>', '<end>')
+
+  -- Enable navigating through quickfix lists using shift + arrow keys.
+  vim.keymap.set('n', '<s-left>', '<cmd>cpfile<cr>zz')
+  vim.keymap.set('n', '<s-right>', '<cmd>cnfile<cr>zz')
+  vim.keymap.set('n', '<s-up>', '<cmd>cprevious<cr>zz')
+  vim.keymap.set('n', '<s-down>', '<cmd>cnext<cr>zz')
+
+  -- Make * and # respect smartcase
+  -- https://vi.stackexchange.com/a/4055
+  vim.keymap.set(
+    'n',
+    '*',
+    ":let @/='\\C\\<' . expand('<cword>') . '\\>'<cr>:let v:searchforward=1<cr>n"
+  )
+  vim.keymap.set(
+    'n',
+    '#',
+    ":let @/='\\C\\<' . expand('<cword>') . '\\>'<cr>:let v:searchforward=0<cr>n"
+  )
+
+  -- Configure c-l to clear search, spellcheck etc
+  vim.keymap.set(
+    'n',
+    '<c-l>',
+    '<cmd>nohlsearch<cr><cmd>diffupdate<cr><cmd>set nospell<cr><cmd>fclose<cr><cmd>mode<cr>'
+  )
+
+  local rbc = require('rbc')
+  vim.keymap.set('n', '<leader>p', rbc.copy_path)
+  vim.keymap.set('n', '<leader>t', rbc.build_test_command)
+  vim.keymap.set('n', 'yoa', rbc.copilot_toggle)
+
+  -- [[ User commands ]]
+  -- See `:help lua-guide-commands-create`
+
+  vim.api.nvim_create_user_command('FormatDisable', function(args)
+    if args.bang then
+      -- FormatDisable! will disable formatting just for this buffer
+      vim.b.disable_autoformat = true
+    else
+      vim.g.disable_autoformat = true
+    end
+  end, {
+    desc = 'Disable autoformat-on-save',
+    bang = true,
+  })
+  vim.api.nvim_create_user_command('FormatEnable', function()
+    vim.b.disable_autoformat = false
+    vim.g.disable_autoformat = false
+  end, {
+    desc = 'Re-enable autoformat-on-save',
+  })
 
   -- [[ Basic Autocommands ]]
   --  See `:help lua-guide-autocommands`
@@ -143,6 +192,12 @@ do
     desc = 'Highlight when yanking (copying) text',
     group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
     callback = function() vim.hl.on_yank() end,
+  })
+
+  -- When reopening a file, jump to the last location.
+  vim.api.nvim_create_autocmd('BufReadPost', {
+    command = [[if line("'\"") > 0 && line("'\"") <= line("$") | exe "normal! g'\"" | endif]],
+    group = vim.api.nvim_create_augroup('jump-to-last-location', {}),
   })
 end
 
@@ -376,10 +431,8 @@ do
     gh 'nvim-lua/plenary.nvim',
     gh 'nvim-telescope/telescope.nvim',
     gh 'nvim-telescope/telescope-ui-select.nvim',
+    gh 'nvim-telescope/telescope-fzf-native.nvim',
   }
-  if vim.fn.executable 'make' == 1 then table.insert(telescope_plugins, gh 'nvim-telescope/telescope-fzf-native.nvim') end
-
-  -- NOTE: You can install multiple plugins at once
   vim.pack.add(telescope_plugins)
 
   -- See `:help telescope` and `:help telescope.setup()`
