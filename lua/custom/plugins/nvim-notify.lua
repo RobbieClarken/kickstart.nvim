@@ -1,3 +1,5 @@
+-- https://github.com/rcarriga/nvim-notify
+
 vim.pack.add({ 'https://github.com/rcarriga/nvim-notify' })
 
 local notify = require('notify')

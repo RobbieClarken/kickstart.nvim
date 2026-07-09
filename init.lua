@@ -766,6 +766,9 @@ do
     gh('WhoIsSethDaniel/mason-tool-installer.nvim'),
   })
 
+  -- For xcode projects, [xcode-build-server](https://github.com/SolaWing/xcode-build-server)
+  -- should be used to generate a `buildServer.json` file in the root of the project
+  -- to ensure sourcekit-lsp is aware of implicit imports.
   vim.lsp.enable('sourcekit')
 
   -- Automatically install LSPs and related tools to stdpath for Neovim
