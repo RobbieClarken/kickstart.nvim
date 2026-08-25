@@ -385,6 +385,8 @@ do
   -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
   -- - sd'   - [S]urround [D]elete [']quotes
   -- - sr)'  - [S]urround [R]eplace [)] [']
+  -- - 0sa$" - [S]urround [A]dd [$]end-of-line ["]
+  -- - srttdiv - [S]urround [R]eplace [T]ag [T]ag div - replaces tag with <div> (loses attributes)
   require('mini.surround').setup()
 
   --- - <space>rw - [R]eplace [W]ord
@@ -476,7 +478,9 @@ do
   local builtin = require('telescope.builtin')
   vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
   vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-  vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
+  vim.keymap.set('n', '<leader>sf', function()
+    builtin.find_files({ hidden = true })
+  end, { desc = '[S]earch [F]iles' })
   vim.keymap.set('n', '<leader>sF', function()
     builtin.find_files({ no_ignore = true, hidden = true })
   end, { desc = '[S]earch [F]iles (include ignored)' })
@@ -715,7 +719,7 @@ do
     --    https://github.com/pmizio/typescript-tools.nvim
     --
     -- But for many setups, the LSP (`ts_ls`) will work just fine
-    -- ts_ls = {},
+    ts_ls = {},
 
     stylua = {}, -- Used to format Lua code
 
